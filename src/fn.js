@@ -196,18 +196,22 @@ export function removeClass(el, className) {
   el.setAttribute("class", elClassName);
 }
 
-// 获取HREF中的参数
-export function getLocationParam(name) {
+// 获取HREF中所有参数
+export function getLocationParams() {
   const search = location.search.slice(1);
   let arr = search.split('&');
-  arr = arr.map(item => {
+  return arr.map(item => {
     let ary = item.split('=');
     return {
       name: ary[0],
       value: ary[1],
     };
   });
-  return (arr.find(item => item.name === name) || {}).value;
+}
+
+// 获取HREF中的指定参数
+export function getLocationParam(name) {
+  return (getLocationParams().find(item => item.name === name) || {}).value;
 }
 
 // 阿拉伯数字中文数字转换
