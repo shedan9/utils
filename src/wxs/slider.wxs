@@ -1,0 +1,87 @@
+var offset = 0,
+    overflow = 150,  // 隐藏的按钮宽度之和
+    start = 0,
+    lastMove = 0,
+    min = 50,  // 最小回弹距离
+    dir = 'left';
+
+function touchstart(e) {
+  start = e.touches[0].pageX;
+}
+
+function touchmove(e) {
+  var x = e.touches[0].pageX;
+  var lastX = lastMove || start;
+  var distance = offset - (x - lastX);
+  if (x - lastX > 0) {
+    dir = 'right';
+  } else {
+    dir = 'left';
+  }
+  if (distance < 0) {
+    offset = 0;
+  } else if (distance > overflow) {
+    offset = overflow;
+  } else {
+    offset = distance;
+  }
+  lastMove = x;
+  setStyle(e.instance);
+}
+
+function touchend(e) {
+  lastMove = 0;
+  if (dir === 'left') {
+    if (offset > min) {
+      setOffset(e.instance, offset, overflow);
+    } else {
+      setOffset(e.instance, offset, 0);
+    }
+  } else {
+    if (overflow - offset > min) {
+      setOffset(e.instance, offset, 0);
+    } else {
+      setOffset(e.instance, offset, overflow);
+    }
+  }
+}
+
+function setStyle(instance) {
+  instance.setStyle({
+    transform: 'translateX(' + -offset + 'px)'
+  });
+}
+
+function setOffset(instance, start, end) {
+  var fn = function() {
+    var diff = end - start;
+    var step = 8;
+    if (diff > 0) {
+      if (offset + step > end) {
+        offset = end;
+        setStyle(instance);
+      } else {
+        offset += step;
+        setStyle(instance);
+        instance.requestAnimationFrame(fn);
+      }
+    } else {
+      if (offset - step < end) {
+        offset = end;
+        setStyle(instance);
+      } else {
+        offset -= step;
+        setStyle(instance);
+        instance.requestAnimationFrame(fn);
+      }
+    }
+  };
+  fn();
+}
+
+
+module.exports = {
+  touchstart: touchstart,
+  touchmove: touchmove,
+  touchend: touchend
+};
