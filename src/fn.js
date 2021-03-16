@@ -16,9 +16,7 @@ export const isDate = isType('Date');
 
 //深拷贝
 export function deepCopy(data) {
-  if (!Array.isArray(data) && !isObject(data)) {
-    return data;
-  } else if (Array.isArray(data)) {
+  if (Array.isArray(data)) {
     return data.map(item => deepCopy(item));
   } else if (isObject(data)) {
     let ret = {};
@@ -26,6 +24,8 @@ export function deepCopy(data) {
       ret[key] = deepCopy(data[key]);
     });
     return ret;
+  } else {
+    return data;
   }
 }
 
