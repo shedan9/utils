@@ -20,8 +20,8 @@ export function deepCopy(data) {
     return data.map(item => deepCopy(item));
   } else if (isObject(data)) {
     let ret = {};
-    Object.keys(data).forEach(key => {
-      ret[key] = deepCopy(data[key]);
+    Object.entries(data).forEach(([key, value]) => {
+      ret[key] = deepCopy(value);
     });
     return ret;
   } else {
