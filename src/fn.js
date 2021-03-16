@@ -256,3 +256,45 @@ export function copy(value) {
   }
   document.body.removeChild(input);
 }
+
+/**
+ * 缓存装饰器
+ * @param func [Function]: 需要缓存的目标函数
+ * @returns {Function}: 返回的装饰函数
+ */
+export function cacheDecorator(func) {
+  const cache = new Map();
+
+  return function (...params) {
+    let flag = false;
+    let tempMap = cache;
+
+    for (let item of params) {
+      if (tempMap.has(item)) {
+        tempMap = tempMap.get(item);
+        flag = true;
+      } else {
+        flag = false;
+        break;
+      }
+    }
+
+    if (flag) {
+      return tempMap;
+    }
+
+    const result = func.apply(this, params);
+    let mapChain = result;
+
+    for (let i = params.length - 1; i > -1; i--) {
+      const item  = params[i];
+      if (i === 0) {
+        cache.set(item, mapChain);
+      } else {
+        mapChain = new Map().set(item, mapChain);
+      }
+    }
+
+    return result;
+  };
+}
