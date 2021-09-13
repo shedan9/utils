@@ -85,12 +85,22 @@ export default {
       list.forEach(item => {
         if (value.some(v => v.id === item.id)) {
           item.selected = true;
+          item.children && this.selectChildrenAll(item.children, true);
           value = value.filter(v => v.id !== item.id);
         } else {
           item.selected = false;
+          item.disabled = false;
+          if (item.children) {
+            this.updateValue(item.children, value);
+          }
         }
+      });
+    },
+    selectChildrenAll(list, bool) {
+      list.forEach(item => {
+        item.disabled = bool;
         if (item.children) {
-          this.updateValue(item.children, value);
+          this.selectChildrenAll(item.children, bool);
         }
       });
     },

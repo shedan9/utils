@@ -91,9 +91,11 @@ export default {
   },
   mounted() {
     window.addEventListener('resize', this.getHeight);
+    window.addEventListener('scroll', this.handleDocumentScroll, true);
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.getHeight);
+    window.removeEventListener('scroll', this.handleDocumentScroll, true);
   },
   computed: {
     searchShow() {
@@ -130,10 +132,8 @@ export default {
     getHeight() {
       const winHeight = (document.documentElement || document.body).clientHeight;
       let el = this.$refs.cascadeInput, top = 0;
-      while (el) {
-        top += el.offsetTop;
-        el = el.offsetParent;
-      }
+      const bcr = el.getBoundingClientRect();
+      top = bcr.top;
       this.height = winHeight - top - 32 - 20 - 40;
       this.searchWidth = this.$refs.cascadeInput.offsetWidth;
     },
@@ -175,13 +175,12 @@ export default {
     },
     computedDropOffset() {
       let el = this.$refs.cascadeInput, left = 0, top = 0;
-      while (el) {
-        left += el.offsetLeft;
-        top += el.offsetTop;
-        el = el.offsetParent;
-      }
+      const bcr = el.getBoundingClientRect();
+      top = bcr.top;
+      left = bcr.left;
       const winWidth = (document.documentElement || document.body).clientWidth;
       const cascadeWith = this.$refs.cascade.$el.offsetWidth;
+      const cascadeHeight = this.$refs.cascadeInput.offsetHeight;
       if (cascadeWith + this.dropLeftOrigin > winWidth) {
         const overflow = this.dropLeftOrigin + cascadeWith - winWidth;
         this.dropLeft = this.dropLeftOrigin - overflow;
@@ -189,7 +188,7 @@ export default {
         this.dropLeft = left;
         this.dropLeftOrigin = left;
       }
-      this.dropTop = top + 32;
+      this.dropTop = top + cascadeHeight;
     },
     handleDocumentClick(e) {
       let el = e.target, show = false;
@@ -202,6 +201,22 @@ export default {
         }
       }
       this.dropShow = show;
+    },
+    handleDocumentScroll(e) {
+      if (!this.dropShow) return;
+      const target = e.target;
+      let inTarget = false, el = this.$refs.cascade.$el;
+      while (el) {
+        if (el === target) {
+          inTarget = true;
+          break;
+        }
+        el = el.parentNode;
+      }
+
+      if (inTarget) {
+        this.computedDropOffset();
+      }
     },
     handleExpand(node) {
       const winWidth = (document.documentElement || document.body).clientWidth;
