@@ -331,3 +331,26 @@ export function IEVersion() {
     return -1;
   }
 }
+
+// 图片下载
+export function imgDownload(src, title = 'img') {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  const img = new Image();
+  img.src = src;
+  img.crossOrigin = "anonymous";
+
+  img.onload = () => {
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+
+    canvas.toBlob(blob => {
+      const el = document.createElement('a');
+      el.href = URL.createObjectURL(blob);
+      el.download = title;
+      el.click();
+    });
+  };
+}
