@@ -29,7 +29,15 @@ export default {
     },
     dataList: {
       type: Array,
-      default: () => [],
+      default: () => [
+        /**
+         * {
+         *    id: '',
+         *    name: '',
+         *    children: [],
+         *  },
+         */
+      ],
     },
     titles: {
       type: Array,
