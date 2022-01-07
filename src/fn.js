@@ -349,8 +349,48 @@ export function imgDownload(src, title = 'img') {
     canvas.toBlob(blob => {
       const el = document.createElement('a');
       el.href = URL.createObjectURL(blob);
-      el.download = title;
+      el.download = title.replace(/\./g, '．');
       el.click();
-    });
+    }, 'image/png');
   };
+}
+
+// 最大公约数
+export function gcd(...args) {
+  if (args.length < 2) return args[0];
+
+  let ret = args[0];
+
+  for (let i = 1; i < args.length; i++) {
+    const cur = args[i];
+    ret = gcd2(cur, ret);
+  }
+
+  return ret;
+
+  function gcd2(a, b) {
+    if (a === b) return a;
+
+    const max = Math.max(a, b);
+    const min = Math.min(a, b);
+    const remain = max % min;
+
+    if (remain === 0) return min;
+
+    return gcd2(min, remain);
+  }
+}
+
+// 最小公倍数
+export function lcm(...args) {
+  if (args.length < 2) return args[0];
+
+  let ret = args[0];
+
+  for (let i = 1; i < args.length; i++) {
+    const cur = args[i];
+    ret = cur * ret / gcd(cur, ret);
+  }
+
+  return ret;
 }

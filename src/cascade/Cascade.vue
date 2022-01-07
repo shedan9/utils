@@ -18,7 +18,7 @@
 
 <script>
 import CascadePane from "./CascadePane";
-import { deepCopy } from '../../../unit/fn';
+import { deepCopy } from '../fn';
 export default {
   name: "Cascade",
   components: {CascadePane},
