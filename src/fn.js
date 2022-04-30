@@ -1,3 +1,6 @@
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+
 const isType = function (type) {
   return function (arg) {
     return Object.prototype.toString.call(arg) === `[object ${type}]`;
@@ -393,4 +396,153 @@ export function lcm(...args) {
   }
 
   return ret;
+}
+
+/**
+ * 当需要某个内容不能截断时，为其增加 data-html2canvas-continuity 属性
+ * 当需要某个内容不展示时，为其增加 data-html2canvas-ignore 属性
+ * @param element
+ * @param name
+ * @return promise
+ */
+export function exportPDF(element, name = "doc") {
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+
+  const disableDomList = element.querySelectorAll("[data-html2canvas-ignore]");
+  const stylesCache = new Map();
+  for (let i = 0; i < disableDomList.length; i++) {
+    const curItem = disableDomList[i];
+    stylesCache.set(curItem, curItem.style.display);
+    curItem.style.display = "none";
+  }
+
+  const eleWidth = element.offsetWidth;
+  const eleHeight = element.offsetHeight;
+  const A4 = [210, 297]; // mm
+  const padding = [5, 5];
+  const A4Content = [A4[0] - padding[0] * 2, A4[1] - padding[1] * 2];
+  const pdfDomHeight = (eleWidth / A4Content[0]) * A4Content[1];
+  const blockInOnePage = {
+    renderIndex: 0,
+    list: element.querySelectorAll("[data-html2canvas-continuity]"),
+  };
+  const renderList = getRenderList();
+
+  for (let i = 0; i < disableDomList.length; i++) {
+    const curItem = disableDomList[i];
+    curItem.style.display = stylesCache.get(curItem);
+  }
+
+  const doc = new jsPDF();
+
+  return renderCanvas().then((canvas) => {
+    const ctx = canvas.getContext("2d");
+    renderList.forEach((item, index) => {
+      const imgData = ctx.getImageData(0, item.top, eleWidth, item.height);
+      const newCanvas = document.createElement("canvas");
+      newCanvas.setAttribute("width", eleWidth + "px");
+      newCanvas.setAttribute("height", item.height + "px");
+      newCanvas.getContext("2d").putImageData(imgData, 0, 0);
+      addImg(newCanvas, item.height);
+
+      if (index !== renderList.length - 1) {
+        doc.addPage();
+      }
+    });
+
+    doc.save(`${name}.pdf`);
+  });
+
+  function getRenderList() {
+    let renderDomHeight = 0;
+    let top = 0;
+    let ret = [];
+    const pushFn = blockInOnePage.list.length ? pushBlockItem : pushItem;
+
+    while (renderDomHeight < eleHeight) {
+      const restPdfHeight =
+        eleHeight - renderDomHeight < pdfDomHeight
+          ? eleHeight - renderDomHeight
+          : pdfDomHeight;
+
+      pushFn(restPdfHeight);
+    }
+
+    return ret;
+
+    function pushItem(height) {
+      ret.push({
+        height: height,
+        top: top,
+      });
+      renderDomHeight += height;
+      top += height;
+    }
+
+    function pushBlockItem(height) {
+      const nextRenderDomH = renderDomHeight + pdfDomHeight;
+      let isBlock = false;
+
+      for (
+        let i = blockInOnePage.renderIndex;
+        i < blockInOnePage.list.length;
+        i++
+      ) {
+        const curEle = blockInOnePage.list[i];
+        const blockOffsetTop = getBlockOffsetTop(curEle);
+        const blockOffsetBottom = getBlockOffsetBottom(curEle);
+
+        if (
+          blockOffsetTop < nextRenderDomH &&
+          blockOffsetBottom > nextRenderDomH
+        ) {
+          const curDomHeight = pdfDomHeight - (nextRenderDomH - blockOffsetTop);
+          const nextDomHeight = curDomHeight <= 0 ? height : curDomHeight;
+          ret.push({
+            height: nextDomHeight,
+            top: top,
+          });
+          renderDomHeight += nextDomHeight;
+          top += nextDomHeight;
+          blockInOnePage.renderIndex = i;
+          isBlock = true;
+          break;
+        }
+      }
+
+      if (!isBlock) {
+        pushItem(height);
+      }
+    }
+  }
+
+  function renderCanvas() {
+    return html2canvas(element, {
+      useCORS: true,
+      width: eleWidth,
+      height: eleHeight,
+    });
+  }
+
+  function addImg(canvas, height) {
+    doc.addImage({
+      imageData: canvas,
+      format: "JPEG",
+      width: A4Content[0],
+      height: (A4Content[0] / eleWidth) * height,
+      x: padding[0],
+      y: padding[1],
+    });
+  }
+
+  function getBlockOffsetTop(block) {
+    return (
+      block.getBoundingClientRect().top - element.getBoundingClientRect().top
+    );
+  }
+
+  function getBlockOffsetBottom(block) {
+    return getBlockOffsetTop(block) + block.offsetHeight;
+  }
 }
