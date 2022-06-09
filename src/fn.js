@@ -498,7 +498,7 @@ export function exportPDF(element, name = "doc") {
           blockOffsetBottom > nextRenderDomH
         ) {
           const curDomHeight = pdfDomHeight - (nextRenderDomH - blockOffsetTop);
-          const nextDomHeight = curDomHeight <= 0 ? height : curDomHeight;
+          const nextDomHeight = Math.round(curDomHeight) <= 0 ? height : curDomHeight;
           ret.push({
             height: nextDomHeight,
             top: top,
