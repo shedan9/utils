@@ -522,6 +522,7 @@ export function exportPDF(element, name = "doc") {
       useCORS: true,
       width: eleWidth,
       height: eleHeight,
+      scale: 1,
     });
   }
 
